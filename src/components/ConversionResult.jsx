@@ -1,11 +1,17 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
-const ConversionResult = ({ result }) => {
+const ConversionResult = ({ convertedAmount }) => {
     return (
-        <div className="bg-gray-800 p-4 rounded-xl shadow mt-4">
-            <h3 className="text-xl font-bold">Conversion Result</h3>
-            <p className="text-lg mt-2">{result}</p>
-        </div>
+        convertedAmount && (
+            <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 font-bold text-lg"
+            >
+                {convertedAmount}
+            </motion.p>
+        )
     );
 };
 
