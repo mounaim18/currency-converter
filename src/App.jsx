@@ -29,8 +29,9 @@ const App = () => {
     const fetchExchangeRate = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/54f7f841d4929b5e26ca3f25/latest/${fromCurrency}`);
-            const rate = response.data.conversion_rates[toCurrency];  // Correctly fetching the conversion rate
+            const response = await axios.get(`https://v6.exchangerate-api.com/v6/${import.meta.env.VITE_EXCHANGE_RATE_API_KEY}/latest/${fromCurrency}`);
+
+            const rate = response.data.conversion_rates[toCurrency]; 
             setExchangeRate(rate);
             setLoading(false);
         } catch (error) {
@@ -58,25 +59,48 @@ const App = () => {
         }
     };
     const fetchHistoricalRates = async () => {
-        setLoading(true);
-        try {
-            // Replace this URL with your API key
-            const response = await axios.get(`https://v6.exchangerate-api.com/v6/54f7f841d4929b5e26ca3f25/history/${fromCurrency}?start_date=2025-01-01&end_date=2025-04-01`);
-            
-            const rates = response.data.conversion_rates;
-            
+    setLoading(true);
+    try {
+        const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY;
+
+        const response = await axios.get(`https://api.exchangerate.host/timeseries`, {
+            params: {
+                start_date: '2023-01-01',
+                end_date: '2023-04-01',
+                base: fromCurrency,
+                symbols: toCurrency,
+                access_key: process.env.VITE_EXCHANGE_RATE_API_KEY // This should work if you properly load your .env file
+            }
+        });
+
+        console.log("Full Response:", response.data);
+
+        if (response.data && response.data.success !== false && response.data.rates) {
+            const rates = response.data.rates;
+
             const formattedRates = Object.keys(rates).map(date => ({
                 date,
-                rate: rates[date][toCurrency]
+                rate: rates[date][toCurrency] || "No Data"
             }));
-    
+
             setHistoricalRates(formattedRates);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching historical rates:', error);
-            setLoading(false);
+        } else {
+            console.error("No rates data returned from API", response.data);
+            if (response.data.error) console.error("API Error Message:", response.data.error);
         }
-    };
+
+        setLoading(false);
+    } catch (error) {
+        console.error('Error fetching historical rates:', error.response ? error.response.data : error.message);
+        setLoading(false);
+    }
+};
+
+    
+    
+    
+    
+    
     
     
 
@@ -105,7 +129,7 @@ const App = () => {
                     <div className="p-8 rounded-2xl bg-white shadow-xl w-full">
                         <h2 className="text-xl font-bold mb-4 text-black">Amount</h2>
                         <input
-                            type="text"
+                            type="number"
                             placeholder="Enter amount"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
